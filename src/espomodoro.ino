@@ -8,13 +8,13 @@
 #include <SerialCommand.h>
 #include <Bounce2.h>
 
-#define SDA D2
-#define SCL D1
+#define SDA_PIN D2
+#define SCL_PIN D1
 #define BUTTON_PIN D3
 #define BUZZER_PIN D5
 
 SerialCommand sCmd;
-SSD1306 display(0x3c, SDA, SCL);
+SSD1306 display(0x3c, SDA_PIN, SCL_PIN);
 Bounce button = Bounce();
 
 int DefaultWorkMinutes = 25;
@@ -35,7 +35,7 @@ enum States: byte {
 States State;
 
 time_t PausedTime, TimeoutTime;
-unsigned long TimeoutDuration = 5; // seconds to wait until showing idle screen
+unsigned long TimeoutDuration = 30; // seconds to wait until showing idle screen
 unsigned long FinishedFlashingLastChange;
 unsigned long FinishedFlashingInterval = 1 * 1000; // milliseconds to flash on/off
 String FinishedMessage[] = {"Finish", ""};
