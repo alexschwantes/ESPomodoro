@@ -6,13 +6,22 @@
 #include "SSD1306.h" // alias for `#include "SSD1306Wire.h"`
 #include "OLEDDisplayUi.h" // Include the UI lib
 #include <SerialCommand.h>
+#include <Bounce2.h>
+
+#define SDA D2
+#define SCL D1
+#define BUTTON_PIN D3
+#define BUZZER_PIN D5
 
 SerialCommand sCmd;
-SSD1306 display(0x3c, D2, D1);
+SSD1306 display(0x3c, SDA, SCL);
 
+Bounce button = Bounce();
 int Minutes;
-bool Idle, Paused, Finished = false;
-time_t PausedTime, FinishedTime;//, FinishedFlashingInterval;
+bool Idle = true;
+bool Paused = true;
+bool Finished = true;
+time_t PausedTime, FinishedTime;
 unsigned long FinishedFlashingLastChange;
 unsigned long FinishedFlashingInterval = 1 * 1000; // milliseconds to flash on/off
 unsigned long FinishedDuration = 10; // seconds to show finish notification
@@ -30,14 +39,13 @@ String formatDigits(int digits)
 
 void countDownTimer()
 {
-    String timeString = formatDigits(Minutes-minute()) + ":" + formatDigits(59-second());
-
-    if(Finished)
+    if(Finished && !Idle)
     {
         notifyFinished();
     }
-    else if(!Paused)
+    else if(!Finished && !Paused)
     {
+        String timeString = formatDigits(Minutes-minute()) + ":" + formatDigits(59-second());
         display.clear();
         display.drawString(64, 0, timeString);
         display.display();
@@ -59,6 +67,7 @@ void notifyFinished()
             display.drawString(64, 0, FinishedMessage[FinishedIndex]);
             display.display();
             FinishedFlashingLastChange = millis();
+            beep();
         }
     }
     else
@@ -69,14 +78,11 @@ void notifyFinished()
 
 void showIdle()
 {
-    if(!Idle)
-    {
-        display.clear();
-        display.drawString(64, 0, "(^_^)");
-        display.display();
-        Idle = true;
-        // (o_o) (°_°) (^_^)
-    }
+    display.clear();
+    display.drawString(64, 0, "(^_^)");
+    display.display();
+    Idle = true;
+    // (o_o) (°_°) (^_^)
 }
 
 void startTimer(int minutes, int seconds)
@@ -87,6 +93,7 @@ void startTimer(int minutes, int seconds)
     Paused = false;
     Finished = false;
     setTime(0, 0, 59-seconds, 1, 1, 1970);
+    beep();
 }
 
 void pauseTimer()
@@ -94,6 +101,7 @@ void pauseTimer()
     Serial.println("Timer Paused.");
     PausedTime = now();
     Paused = true;
+    beep();
 }
 
 void resumeTimer()
@@ -101,6 +109,7 @@ void resumeTimer()
     Serial.println("Timer Resumed.");
     setTime(PausedTime);
     Paused = false;
+    beep();
 }
 
 void finishTimer()
@@ -109,6 +118,8 @@ void finishTimer()
     FinishedTime = now();
     FinishedFlashingLastChange = millis();
     Finished = true;
+    beep();
+    beep();
 }
 
 void setTimer()
@@ -134,6 +145,13 @@ void setTimer()
     startTimer(minutes, seconds);
 }
 
+void beep()
+{
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(5);
+    digitalWrite(BUZZER_PIN, LOW);
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -144,16 +162,39 @@ void setup()
     Serial.println("Ready");
 
     display.init();
-    //  display.flipScreenVertically();
+    // display.flipScreenVertically(); // If screen is upside down
     display.setTextAlignment(TEXT_ALIGN_CENTER);
-    // display.setFont(ArialMT_Plain_24); //10,16,24
     display.setFont(Open_Sans_Hebrew_Bold_40);
 
-    startTimer(1, 30);
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
+    button.attach(BUTTON_PIN);
+    button.interval(5);
+
+    pinMode(BUZZER_PIN, OUTPUT);
+
+    showIdle();
 }
 
 void loop()
 {
     sCmd.readSerial();
+    button.update();
+
+    if(button.fell())
+    {
+        if(Idle || Finished)
+        {
+            startTimer(1, 30);
+        }
+        else if(Paused)
+        {
+            resumeTimer();
+        }
+        else
+        {
+            pauseTimer();
+        }
+    }
+
     countDownTimer();
 }
