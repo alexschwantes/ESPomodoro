@@ -15,8 +15,12 @@
 
 SerialCommand sCmd;
 SSD1306 display(0x3c, SDA, SCL);
-
 Bounce button = Bounce();
+
+int DefaultWorkMinutes = 25;
+int DefaultWorkSeconds = 0;
+int DefaultBreakMinutes = 5;
+int DefaultBreakSeconds = 0;
 int Minutes;
 bool Idle = true;
 bool Paused = true;
@@ -24,9 +28,11 @@ bool Finished = true;
 time_t PausedTime, FinishedTime;
 unsigned long FinishedFlashingLastChange;
 unsigned long FinishedFlashingInterval = 1 * 1000; // milliseconds to flash on/off
-unsigned long FinishedDuration = 10; // seconds to show finish notification
+unsigned long FinishedDuration = 30; // seconds to show finish notification
 int FinishedIndex = 0;
 String FinishedMessage[] = {"Finish", ""};
+unsigned long longButtonPressTimeStamp = 0;
+unsigned long buttonPresses[] = {0, 0};
 
 String formatDigits(int digits)
 {
@@ -67,7 +73,7 @@ void notifyFinished()
             display.drawString(64, 0, FinishedMessage[FinishedIndex]);
             display.display();
             FinishedFlashingLastChange = millis();
-            beep();
+            beepBig();
         }
     }
     else
@@ -118,7 +124,7 @@ void finishTimer()
     FinishedTime = now();
     FinishedFlashingLastChange = millis();
     Finished = true;
-    beep();
+    beepBig();
     beep();
 }
 
@@ -152,6 +158,72 @@ void beep()
     digitalWrite(BUZZER_PIN, LOW);
 }
 
+void beepBig()
+{
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
+}
+
+bool multiButtonPress()
+{
+    // if button press is a second press
+    if(buttonPresses[0] > 0 && millis() - buttonPresses[0] < 1000)
+    {
+        buttonPresses[1] = millis();
+        return true;
+    }
+    else
+    {
+        // record as first press
+        buttonPresses[0] = millis();
+        buttonPresses[1] = 0;
+        return false;
+    }
+}
+
+void handleButton()
+{
+    button.update();
+    if(button.fell())
+    {
+        longButtonPressTimeStamp = millis();
+        if(multiButtonPress())
+        {
+            // second press
+            startTimer(DefaultBreakMinutes, DefaultBreakSeconds);
+        }
+        else
+        {
+            if(Idle || Finished)
+            {
+                // first press
+                startTimer(DefaultWorkMinutes, DefaultWorkSeconds);
+            }
+            else if(Paused)
+            {
+                resumeTimer();
+            }
+            else
+            {
+                pauseTimer();
+            }
+        }
+    }
+    else if(button.rose())
+    {
+        // reset button press
+        longButtonPressTimeStamp = 0;
+    }
+
+    // long press (longer than 500 ms)
+    if(longButtonPressTimeStamp > 0 && millis() - longButtonPressTimeStamp >= 500)
+    {
+        longButtonPressTimeStamp = 0;
+        startTimer(DefaultWorkMinutes, DefaultWorkSeconds);
+    }
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -178,23 +250,6 @@ void setup()
 void loop()
 {
     sCmd.readSerial();
-    button.update();
-
-    if(button.fell())
-    {
-        if(Idle || Finished)
-        {
-            startTimer(1, 30);
-        }
-        else if(Paused)
-        {
-            resumeTimer();
-        }
-        else
-        {
-            pauseTimer();
-        }
-    }
-
+    handleButton();
     countDownTimer();
 }
