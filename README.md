@@ -3,6 +3,8 @@ ESPomodoro
 
 This is a little take on implementing a physical digital Pomodoro timer for the ESP8266. There is lots of Pomodoro software out there to do this, but I needed something physically flashing and beeping at me to get me out of my chair and stay focused.
 
+![Espomodoro](/espomodoro.jpg?raw=true "Espomodoro")
+
 ## Background
 The Pomodoro Technique is a time management method that uses a timer to break down work into intervals, traditionally 25 minutes in length, separated by short breaks. See https://en.wikipedia.org/wiki/Pomodoro_Technique for further details.
 
