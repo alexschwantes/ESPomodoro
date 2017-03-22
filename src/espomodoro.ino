@@ -1,10 +1,12 @@
+
+
 #include <Arduino.h>
 #include <TimeLib.h>
 #include "font.h"
 #include <Streaming.h>
-#include <Wire.h>  // Only needed for Arduino 1.6.5 and earlier
-#include "SSD1306.h" // alias for `#include "SSD1306Wire.h"`
-#include "OLEDDisplayUi.h" // Include the UI lib
+#include <Wire.h>
+#include "SSD1306.h"
+// #include "OLEDDisplayUi.h"
 #include <SerialCommand.h>
 #include <Bounce2.h>
 
@@ -26,11 +28,11 @@ int Minutes = DefaultWorkMinutes;
 int Seconds = DefaultWorkSeconds;
 
 enum States: byte {
-  IDLE,
-  RUNNING,
-  PAUSED,
-  FINISHED,
-  TOGGLE
+    IDLE,
+    RUNNING,
+    PAUSED,
+    FINISHED,
+    TOGGLE
 };
 States State;
 

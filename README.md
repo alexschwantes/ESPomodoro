@@ -12,6 +12,14 @@ The Pomodoro Technique is a time management method that uses a timer to break do
 * 1 x 3V Piezo Buzzer (~$0.20)
 * 1 x SSD1306 128x64 I2C OLED Screen (~$4)
 
+## Required Libraries
+All these libraries should be found in the standard Arduino Library Manager
+* ESP8266_SSD1306
+* Time
+* SerialCommand
+* Streaming
+* Bounce2
+
 ## Installation
 * If your using PlatformIO, it should be as simple as downloading the project, importing it into PlatformIO and flashing it to your ESP.
 * If your using Arduino IDE, checkout or download a copy of the repository. Arduino requires the folder name to match the main file, so rename the src folder to *espomodoro*. The only files you really need are the espomodoro.ino and font.h files. Then double click the espomodoro.ino file in that folder and flash to your device.
