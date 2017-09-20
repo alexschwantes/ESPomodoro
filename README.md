@@ -33,7 +33,7 @@ If your setup is different, you can edit the following lines of code to configur
 #define BUTTON_PIN D3
 #define BUZZER_PIN D5
 ```
-
+ 
 ## Usage
 ESPomodoro is split into a *work* timer of 25 minutes and a *break* timer of 5 minutes.
 * It will start up in the *work* mode.
